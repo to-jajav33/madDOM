@@ -11,14 +11,13 @@ export class MadDom {
 	 */
 	static async addAt(elem, parent) {
 		MadDom.define(elem.constructor);
-		const container = elem;
 
 		if (parent) {
-			parent.appendChild(container);
-			await container.whenReady;
+			parent.appendChild(elem);
+			await elem.whenReady;
 		}
 
-		return container;
+		return elem;
 	}
 
 	/**

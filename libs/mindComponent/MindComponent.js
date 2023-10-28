@@ -39,7 +39,7 @@ export class MindComponent extends HTMLElement {
 		watch: {}
 	};
 
-	constructor(opts = {metaURL: 'nourlprovided'}) {
+	constructor(opts = {}) {
 		super();
 
 		this.root = this;
@@ -75,46 +75,8 @@ export class MindComponent extends HTMLElement {
 		this.whenReadyPromiseController = promiseFactory();
 		this.whenReady;
 		
-		const {metaURL} = opts;
 		if (!this.constructor._templateProm) {
-			this.constructor._templateProm = (async() => {
-				if (!this.constructor.__template) {
-					const htmlResp = await fetch(metaURL.replace('.js', '.html'));
-					if (htmlResp.status !== 200) throw(`${htmlResp.statusText} ${htmlResp.url}`);
-	
-					const html = await htmlResp.text();
-					docFragSpan.innerHTML = '';
-					docFragSpan.innerHTML = html;
-					this.constructor.__template = docFragSpan.querySelector('template');
-					if (!this.constructor.__template) {
-						docFragSpan.innerHTML = `<template>${html}</template>`;
-						this.constructor.__template = docFragSpan.querySelector('template');
-					}
-					const srcs = this.constructor.__template.content.querySelectorAll('[src]');
-					const hrefs = this.constructor.__template.content.querySelectorAll('[href]');
-
-					let brokenURL = metaURL.split('/');
-					brokenURL.splice(-1, 1);
-					
-					let rootURL = brokenURL.join('/');
-					if (!rootURL.endsWith('/')) rootURL = rootURL + '/';
-					for (const elem of srcs) {
-						if (elem.attributes.src.nodeValue.startsWith('.')) {
-							elem.attributes.src.nodeValue = rootURL + elem.attributes.src.nodeValue
-						}
-
-						/** @todo optimize, if src already exists lets remove????/commentout???/block-fetch??? it to save on cache/network calls */
-					}
-					for (const elem of hrefs) {
-						if (elem.attributes.href.nodeValue.startsWith('.')) {
-							elem.attributes.href.nodeValue = rootURL + elem.attributes.href.nodeValue;
-						}
-
-						/** @todo optimize, if src already exists lets remove????/commentout???/block-fetch??? it to save on cache/network calls */
-					}
-					docFragSpan.innerHTML = '';
-				}
-			})();
+			this.constructor.loadTemplate();
 		}
 	}
 
@@ -185,7 +147,14 @@ export class MindComponent extends HTMLElement {
 		const clonedContent = template.content.cloneNode(true);
 
 		// pass default attributes
-		const defaultAttrs = [...this.constructor.__template.attributes];
+		let nextPrototype = Object.getPrototypeOf(this);
+		const defaultAttrs = [];
+		while(nextPrototype && (nextPrototype.constructor.name !== 'MindComponent' && nextPrototype.constructor.name !== HTMLElement.name && nextPrototype.constructor.name !== Element.name && nextPrototype.constructor.name !== Node.name)) {
+			await nextPrototype.constructor.loadTemplate();
+			defaultAttrs.splice(defaultAttrs.length, 0, ...nextPrototype.constructor.__template.attributes);
+			const nextNextProto = Object.getPrototypeOf(nextPrototype);
+			nextPrototype = nextNextProto;
+		}
 		for (const attrNode of defaultAttrs) {
 			if (!this.hasAttribute(attrNode.name)) {
 				this.setAttribute(attrNode.name, attrNode.value);
@@ -195,6 +164,15 @@ export class MindComponent extends HTMLElement {
 		this.generateSlots(clonedContent, this);
 		this.generateRefs(clonedContent, this.mind.refs);
 		this.appendChild(clonedContent);
+
+		await this._allCurrentChildrenComponentsReady();
+
+		const thisAttrs = Object.keys(this.mind.attrs);
+		// lets call the attributes to intialize any behaviors
+		for (const attrName of thisAttrs) {
+			this.mind.attrs[attrName](this.getAttribute(attrName.replace(attrName.charAt(0), attrName.charAt(0).toLowerCase()).replace(/[A-Z]/g, (val) => `-${val.toLowerCase()}`)));
+		}
+
 		this._isTemplateContentFulfilled = true;
 	}
 
@@ -229,8 +207,6 @@ export class MindComponent extends HTMLElement {
 			}
 			await this._templateContentReady;
 
-			// call this before and after init to ensure latest mind.refs exists
-			await this._allCurrentChildrenComponentsReady();
 			// this.generateRefs(this, this.mind.refs);
 			
 			if (this.mind.attrs) {
@@ -399,6 +375,62 @@ export class MindComponent extends HTMLElement {
 	// 		tmplt.parentNode.replaceChild(newElement, tmplt);
 	// 	}
 	// }
+
+
+	static async loadTemplateWithMeta(metaUrl, paramClass) {
+		if (paramClass._templateProm) return await paramClass._templateProm;
+		
+		paramClass._templateProm = paramClass._loadTemplate(metaUrl, paramClass);
+		return await paramClass._templateProm;
+	}
+
+	static async loadTemplate() {
+		throw(`should override this function.
+
+			static async loadTemplate {
+				return await this.loadTemplateWithMeta(import.meta.url, this);
+			}
+		`);
+	}
+
+	static async _loadTemplate(metaURL, paramClass) {
+		if (!paramClass.__template) {
+			const htmlResp = await fetch(metaURL.replace('.js', '.html'));
+			if (htmlResp.status !== 200) throw(`${htmlResp.statusText} ${htmlResp.url}`);
+
+			const html = await htmlResp.text();
+			docFragSpan.innerHTML = '';
+			docFragSpan.innerHTML = html;
+			paramClass.__template = docFragSpan.querySelector('template');
+			if (!paramClass.__template) {
+				docFragSpan.innerHTML = `<template>${html}</template>`;
+				paramClass.__template = docFragSpan.querySelector('template');
+			}
+			const srcs = paramClass.__template.content.querySelectorAll('[src]');
+			const hrefs = paramClass.__template.content.querySelectorAll('[href]');
+
+			let brokenURL = metaURL.split('/');
+			brokenURL.splice(-1, 1);
+			
+			let rootURL = brokenURL.join('/');
+			if (!rootURL.endsWith('/')) rootURL = rootURL + '/';
+			for (const elem of srcs) {
+				if (elem.attributes.src.nodeValue.startsWith('.')) {
+					elem.attributes.src.nodeValue = rootURL + elem.attributes.src.nodeValue
+				}
+
+				/** @todo optimize, if src already exists lets remove????/commentout???/block-fetch??? it to save on cache/network calls */
+			}
+			for (const elem of hrefs) {
+				if (elem.attributes.href.nodeValue.startsWith('.')) {
+					elem.attributes.href.nodeValue = rootURL + elem.attributes.href.nodeValue;
+				}
+
+				/** @todo optimize, if src already exists lets remove????/commentout???/block-fetch??? it to save on cache/network calls */
+			}
+			docFragSpan.innerHTML = '';
+		}
+	}
 
 	/**
 	 * 

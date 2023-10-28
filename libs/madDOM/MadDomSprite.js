@@ -1,13 +1,12 @@
-import MindStore from "../mindStore/MindStore.js";
-import MadDomContainer from "./MadDomContainer.js";
+import MadDomTransform from "./MadDomTransform.js";
 
-export class MadDomSprite extends MadDomContainer {
+export class MadDomSprite extends MadDomTransform {
 	mind = {
 		...this.mind,
 		refs: {
 			...this.mind.refs,
-			/** @type {import('./MadDomContainer.js').MadDomContainer[]} */
-			refContainer: [],
+			/** @type {import('./MadDomTransform.js').MadDomTransform[]} */
+			refAnchor: [],
 			/** @type {HTMLImageElement[]} */
 			refTexture: []
 		},
@@ -17,9 +16,8 @@ export class MadDomSprite extends MadDomContainer {
 		super({...opts, metaURL: opts.metaURL ? opts.metaURL : import.meta.url});
 	}
 
-	attached() {
-		const image = this.mind.refs.refTexture[0];
-		this.mind.refs.refContainer[0].mind.slots.anchor.append(image);
+	static async loadTemplate() {
+		return await this.loadTemplateWithMeta(import.meta.url, this);
 	}
 
 	async setFrames(frames) {
