@@ -21,11 +21,13 @@ export class MadDomTransform extends MindComponent {
 				return isAnchor;
 			},
 			x: (val) => {
-				this.origin.style.left = val;
+				this.origin.style.left = val; // immediate render
+				// this.origin.mind.style.left = val; // render on next optimizedRender
 				return val;
 			},
 			y: (val) => {
-				this.origin.style.top = val;
+				this.origin.style.top = val; // immediate render
+				// this.origin.mind.style.top = val; // render on next optimizedRender
 				return val;
 			},
 			scaleX: (val) => {
@@ -84,6 +86,20 @@ export class MadDomTransform extends MindComponent {
 
 	static async loadTemplate() {
 		return await this.loadTemplateWithMeta(import.meta.url, this);
+	}
+
+	get x () {
+		return this.mind.attrs.x;
+	}
+	set x (val) {
+		this.mind.attrs.x = val;
+	}
+
+	get y () {
+		return this.mind.attrs.x;
+	}
+	set y (val) {
+		this.mind.attrs.x = val;
 	}
 }
 
