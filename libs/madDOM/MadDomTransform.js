@@ -11,8 +11,8 @@ export class MadDomTransform extends MindComponent {
 			/** @type {HTMLDivElement | undefined} */
 			anchor: undefined
 		},
-		attrs: {
-			...this.mind.attrs,
+		attrs_type_cast: {
+			...this.mind.attrs_type_cast,
 			isAnchor: (val) => {
 				const isAnchor = (typeof val === 'string' && val.toLowerCase() === 'false') ? false : !!val;
 
@@ -29,12 +29,18 @@ export class MadDomTransform extends MindComponent {
 				return val;
 			},
 			scaleX: (val) => {
-				this.origin.style.transform = `scale(${val}, ${this.mind.attrs.scaleY || 0})`;
+				val = (val == 0) ? 0 : Number(val) || 1;
+				const scaleY = (this.mind.attrs.scaleY == 0) ? 0 : this.mind.attrs.scaleY || 1;
+
+				this.origin.style.transform = `scale(${val}, ${scaleY})`;
 
 				return val;
 			},
 			scaleY: (val) => {
-				this.origin.style.transform = `scale(${this.mind.attrs.scaleX || 0}, ${val})`;
+				val = (val == 0) ? 0 : Number(val) || 1;
+				const scaleX = (this.mind.attrs.scaleX == 0) ? 0 : this.mind.attrs.scaleX || 1;
+				
+				this.origin.style.transform = `scale(${scaleX}, ${val})`;
 
 				return val;
 			},
@@ -52,6 +58,10 @@ export class MadDomTransform extends MindComponent {
 		super({...opts, metaURL: opts.metaURL ? opts.metaURL : import.meta.url});
 
 		this.origin = this;
+	}
+
+	get anchor() {
+		return this.querySelector('mad-dom-transform');
 	}
 
 	async addChild(child) {

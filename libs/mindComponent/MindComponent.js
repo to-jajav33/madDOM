@@ -6,7 +6,7 @@ const docFrag = document.createDocumentFragment();
 docFrag.appendChild(docFragSpan);
 
 function camelToHyphen(key) {
-	let hyphenKey = key.replace(key.charAt(key), key.charAt(key).toLowerCase());
+	let hyphenKey = key.replace(key.charAt(0), key.charAt(0).toLowerCase());
 	hyphenKey = hyphenKey.replace(/[A-Z]/g, (substr) => `-${substr.toLowerCase()}`);
 
 	return hyphenKey;
@@ -33,6 +33,7 @@ export class MindComponent extends HTMLElement {
 	mind = {
 		actions: {},
 		attrs: {},
+		attrs_type_cast: {},
 		refs: {},
 		style: {},
 		slots: {},
@@ -83,6 +84,7 @@ export class MindComponent extends HTMLElement {
 	attributeChangedCallback (name, oldValue, newValue) {
 		if (oldValue === newValue) return;
 
+		debugger;
 		this.mind.attrs[name] = newValue;
 	}
 
@@ -142,6 +144,8 @@ export class MindComponent extends HTMLElement {
 	}
 
 	async _initAddTemplateContent() {
+		if (this._templateContentReady) return this._templateContentReady;
+
 		/** @type {HTMLTemplateElement} */
 		const template = this.constructor.__template;
 		const clonedContent = template.content.cloneNode(true);
@@ -167,10 +171,11 @@ export class MindComponent extends HTMLElement {
 
 		await this._allCurrentChildrenComponentsReady();
 
-		const thisAttrs = Object.keys(this.mind.attrs);
+		debugger;
+		const thisAttrs = Object.keys(this.mind.attrs_type_cast);
 		// lets call the attributes to intialize any behaviors
 		for (const attrName of thisAttrs) {
-			this.mind.attrs[attrName](this.getAttribute(attrName.replace(attrName.charAt(0), attrName.charAt(0).toLowerCase()).replace(/[A-Z]/g, (val) => `-${val.toLowerCase()}`)));
+			this.mind.attrs[attrName] = (this.getAttribute(camelToHyphen(attrName)));
 		}
 
 		this._isTemplateContentFulfilled = true;
@@ -200,70 +205,15 @@ export class MindComponent extends HTMLElement {
 			if (!this.constructor.__template) {
 				await this.constructor._templateProm;
 			}
+
+			this.createAttributeListeners();
 			
-			// cloned elements should still wait for their contents to be added.
+			// loading template is static, setting attributes and refs is instance related.
+			// the following is meant to add instance related stuff.
 			if (!this._templateContentReady) {
 				this._templateContentReady = this._initAddTemplateContent();
 			}
 			await this._templateContentReady;
-
-			// this.generateRefs(this, this.mind.refs);
-			
-			if (this.mind.attrs) {
-				const castAttrs = {};
-				
-				Object.keys(this.mind.attrs).reduce((preVal, currVal, currIndex, arr) => {
-					castAttrs[currVal] = this.mind.attrs[currVal];
-				}, castAttrs);
-				const lastValue = {};
-				this.constructor.observedAttributes = () => {
-					return Object.keys(castAttrs).map(camelToHyphen);
-				};
-				
-				this.mind.attrs = new Proxy(castAttrs, {
-					get: (_targ, prop) => {
-						let hyphenProp = camelToHyphen(prop);
-						if (typeof castAttrs[prop] !== 'function') {
-							return castAttrs[prop];
-						}
-						return castAttrs[prop](this.getAttribute(hyphenProp));
-					},
-					set: (_targ, prop, val) => {
-						const oldVal = lastValue[prop];
-						
-						let newVal;
-						if (typeof castAttrs[prop] !== 'function') {
-							newVal = val;
-						} else {
-							newVal = castAttrs[prop](val);
-						}
-						if (oldVal === newVal) return true;
-						lastValue[prop] = newVal;
-						
-						let hyphenProp = camelToHyphen(prop);
-						this.setAttribute(hyphenProp, newVal);
-	
-						if (newVal === undefined || newVal === null) {
-							this.removeAttribute(prop);
-						}
-	
-						this.dispatchEvent(new CustomEvent('attribute_changed', {
-							detail: {
-								prop,
-								newVal
-							}
-						}));
-
-						// const repeatInfo = getRepeatInfoOf(this);
-						// if (repeatInfo) {
-						// 	repeatInfo.forceUpdate = true;
-						// }
-						
-						return true;
-					}
-				});
-				this.mind.attrs.__isProxy = true;
-			}
 			
 			// only firstAttached call should be init: preferably used to add elements once, instead of adding and removing while attached/detached
 			if (!this._initReady) {
@@ -306,6 +256,53 @@ export class MindComponent extends HTMLElement {
 		
 		await Promise.resolve(this.detached());
 		this.whenDetachedReadyPromiseController.resolve()
+	}
+
+	createAttributeListeners() {
+		const castAttrs = this.mind.attrs_type_cast;
+		this.constructor.observedAttributes = () => {
+			return Object.keys(castAttrs).map(camelToHyphen);
+		};
+		const lastValue = {};
+		
+		this.mind.attrs.__isProxy = true;
+		this.mind.attrs = new Proxy(lastValue, {
+			get: (targ, prop) => {
+				return targ[prop];
+			},
+			set: (_targ, prop, val) => {
+				const oldVal = lastValue[prop];
+
+				let newVal;
+				if (typeof castAttrs[prop] !== 'function') {
+					newVal = val;
+				} else {
+					newVal = castAttrs[prop](val);
+				}
+				if (oldVal === newVal) return true;
+				lastValue[prop] = newVal;
+				let hyphenProp = camelToHyphen(prop);
+				this.setAttribute(hyphenProp, newVal);
+
+				if (newVal === undefined || newVal === null) {
+					this.removeAttribute(prop);
+				}
+
+				this.dispatchEvent(new CustomEvent('attribute_changed', {
+					detail: {
+						prop,
+						newVal
+					}
+				}));
+
+				// const repeatInfo = getRepeatInfoOf(this);
+				// if (repeatInfo) {
+				// 	repeatInfo.forceUpdate = true;
+				// }
+				
+				return true;
+			}
+		});
 	}
 
 	generateRefs(elem = this, refObj = this.mind.refs) {

@@ -21,7 +21,7 @@ export class MadDom {
 	}
 
 	/**
-	 * @template {T}
+	 * @template {T extends abstract new (...args: any) => any}
 	 *
 	 * @param {T} ElemClass
 	 * @param {HTMLElement} parent
