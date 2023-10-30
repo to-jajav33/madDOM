@@ -1,8 +1,8 @@
 import MadDomTransform from "./MadDomTransform.js";
 
 export class MadDomContainer extends MadDomTransform {
-	mind = {
-		...this.mind,
+	mad = {
+		...this.mad,
 		refs: {
 			/** @type {HTMLDivElement[]} */
 			refAnchor: [],

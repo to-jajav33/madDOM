@@ -1,10 +1,10 @@
 import MadDomTransform from "./MadDomTransform.js";
 
 export class MadDomSprite extends MadDomTransform {
-	mind = {
-		...this.mind,
+	mad = {
+		...this.mad,
 		refs: {
-			...this.mind.refs,
+			...this.mad.refs,
 			/** @type {import('./MadDomTransform.js').MadDomTransform[]} */
 			refAnchor: [],
 			/** @type {HTMLImageElement[]} */
@@ -27,13 +27,13 @@ export class MadDomSprite extends MadDomTransform {
 
 		if (this.frames.length) {
 			await new Promise((resolve, reject) => {
-				this.mind.refs.refTexture[0].onerror = () => {
+				this.mad.refs.refTexture[0].onerror = () => {
 					reject();
 				};
-				this.mind.refs.refTexture[0].onload = () => {
+				this.mad.refs.refTexture[0].onload = () => {
 					resolve();
 				};
-				this.mind.refs.refTexture[0].src = frames[0];
+				this.mad.refs.refTexture[0].src = frames[0];
 			});
 		}
 	}

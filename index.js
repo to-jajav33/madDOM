@@ -12,5 +12,5 @@ import MadDom from './libs/madDOM/MadDOM.js';
 	]);
 	sprite.anchor.x = '-50%';
 	sprite.origin.x = '100px';
-	sprite.mind.style.background = 'red';
+	sprite.mad.style.background = 'red';
 })()

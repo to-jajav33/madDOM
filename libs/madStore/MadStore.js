@@ -4,7 +4,7 @@ const stores = {};
 /** @type {Map<object, {deeperProxies: ProxyConstructor, listeners: Record<string, Array<{scope: unknown, fn: (newVal: unknown, oldVal: unknown) => void}, debounce: number| null}>>} */
 const observedStores = new Map();
 
-export const MindStore = {
+export const MaddStore = {
 	/**
 	 * @template T
 	 * @param {string} url name or url to store the instance of store in
@@ -18,7 +18,7 @@ export const MindStore = {
 				const inst = new paramClass();
 				stores[url] = new Proxy(inst, {
 					get: (_targ, prop) => {
-						if (MindStore.__debug__ && typeof _targ[prop] === 'function' && !_targ[prop].__isBinded__) {
+						if (MaddStore.__debug__ && typeof _targ[prop] === 'function' && !_targ[prop].__isBinded__) {
 							const oldFn = _targ[prop];
 							_targ[prop] = function (...args) {
 								console.group(`calling ${_targ.constructor.name}::${prop}`);
@@ -56,7 +56,7 @@ export const MindStore = {
 						return true;
 					}
 				});
-				stores[url].____isMindStoreProxy____ = true;
+				stores[url].____isMaddStoreProxy____ = true;
 
 				// if init is a promise, return a promise that when resolved, returns store
 				if (typeof stores[url].init === 'function') {
@@ -80,7 +80,7 @@ export const MindStore = {
 	 * @returns {[T]}
 	 * */
 	observe: (store, arrOfProps, listener, scope) => {
-		if (!store.____isMindStoreProxy____) throw('Must use the returned store from MindStore.define function');
+		if (!store.____isMaddStoreProxy____) throw('Must use the returned store from MaddStore.define function');
 		if (!arrOfProps.length) return console.warn('Invalid properties to observer');
 
 		const info = observedStores.get(store) || {listeners: {}, deeperProxies: {}, debounce: null};
@@ -133,4 +133,4 @@ export const MindStore = {
 	}
 };
 
-export default MindStore;
+export default MaddStore;

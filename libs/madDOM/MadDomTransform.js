@@ -1,8 +1,8 @@
-import MindComponent from "../mindComponent/MindComponent.js";
+import MadComponent from "../madComponent/MadComponent.js";
 
-export class MadDomTransform extends MindComponent {
-	mind = {
-		...this.mind,
+export class MadDomTransform extends MadComponent {
+	mad = {
+		...this.mad,
 		refs: {
 			/** @type {HTMLDivElement[]} */
 			refAnchor: [],
@@ -12,7 +12,7 @@ export class MadDomTransform extends MindComponent {
 			anchor: undefined
 		},
 		attrs_type_cast: {
-			...this.mind.attrs_type_cast,
+			...this.mad.attrs_type_cast,
 			isAnchor: (val) => {
 				const isAnchor = (typeof val === 'string' && val.toLowerCase() === 'false') ? false : !!val;
 
@@ -22,17 +22,17 @@ export class MadDomTransform extends MindComponent {
 			},
 			x: (val) => {
 				this.origin.style.left = val; // immediate render
-				// this.origin.mind.style.left = val; // render on next optimizedRender
+				// this.origin.mad.style.left = val; // render on next optimizedRender
 				return val;
 			},
 			y: (val) => {
 				this.origin.style.top = val; // immediate render
-				// this.origin.mind.style.top = val; // render on next optimizedRender
+				// this.origin.mad.style.top = val; // render on next optimizedRender
 				return val;
 			},
 			scaleX: (val) => {
 				val = (val == 0) ? 0 : Number(val) || 1;
-				const scaleY = (this.mind.attrs.scaleY == 0) ? 0 : this.mind.attrs.scaleY || 1;
+				const scaleY = (this.mad.attrs.scaleY == 0) ? 0 : this.mad.attrs.scaleY || 1;
 
 				this.origin.style.transform = `scale(${val}, ${scaleY})`;
 
@@ -40,7 +40,7 @@ export class MadDomTransform extends MindComponent {
 			},
 			scaleY: (val) => {
 				val = (val == 0) ? 0 : Number(val) || 1;
-				const scaleX = (this.mind.attrs.scaleX == 0) ? 0 : this.mind.attrs.scaleX || 1;
+				const scaleX = (this.mad.attrs.scaleX == 0) ? 0 : this.mad.attrs.scaleX || 1;
 				
 				this.origin.style.transform = `scale(${scaleX}, ${val})`;
 
@@ -89,17 +89,17 @@ export class MadDomTransform extends MindComponent {
 	}
 
 	get x () {
-		return this.mind.attrs.x;
+		return this.mad.attrs.x;
 	}
 	set x (val) {
-		this.mind.attrs.x = val;
+		this.mad.attrs.x = val;
 	}
 
 	get y () {
-		return this.mind.attrs.x;
+		return this.mad.attrs.x;
 	}
 	set y (val) {
-		this.mind.attrs.x = val;
+		this.mad.attrs.x = val;
 	}
 }
 

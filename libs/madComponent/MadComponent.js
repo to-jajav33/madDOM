@@ -1,5 +1,5 @@
 // import { getRepeatInfoOf } from "../../../js/learn/helpers/repeatElement.js";
-import MindStore from "../mindStore/MindStore.js";
+import MadStore from "../madStore/MadStore.js";
 
 const docFragSpan = document.createElement('span');
 const docFrag = document.createDocumentFragment();
@@ -29,8 +29,8 @@ function promiseFactory() {
 	return out;
 }
 
-export class MindComponent extends HTMLElement {
-	mind = {
+export class MadComponent extends HTMLElement {
+	mad = {
 		actions: {},
 		attrs: {},
 		attrs_type_cast: {},
@@ -46,8 +46,8 @@ export class MindComponent extends HTMLElement {
 		this.root = this;
 		this.lock = {};
 		this._allowRenderOptimized = true;
-		const style = this.mind.style || {};
-		this.mind.style = new Proxy(style, {
+		const style = this.mad.style || {};
+		this.mad.style = new Proxy(style, {
 			get: (targ, prop) => {
 				return targ[prop];
 			},
@@ -57,16 +57,16 @@ export class MindComponent extends HTMLElement {
 				return true;
 			}
 		});
-		const watchProps = Object.keys(this.mind.watch);
+		const watchProps = Object.keys(this.mad.watch);
 		for (const wProp of watchProps) {
-			MindStore.observe(this.mind.watch, [wProp], () => {
+			MadStore.observe(this.mad.watch, [wProp], () => {
 				
 			});
 		}
 
 		this._isTemplateContentFulfilled = false;
 		this._isInitReadyFulfilled = false;
-		this.isMindComponent = true; // attributes can't be added in constructor, but we can add properties and use this to find mind-components
+		this.isMadComponent = true; // attributes can't be added in constructor, but we can add properties and use this to find mad-components
 
 		this._renderOptimized = this._renderOptimized.bind(this);
 		
@@ -83,9 +83,7 @@ export class MindComponent extends HTMLElement {
 
 	attributeChangedCallback (name, oldValue, newValue) {
 		if (oldValue === newValue) return;
-
-		debugger;
-		this.mind.attrs[name] = newValue;
+		this.mad.attrs[name] = newValue;
 	}
 
 	/**
@@ -105,20 +103,20 @@ export class MindComponent extends HTMLElement {
 		// lets mark init resolved if this clone already has initialized content from cloner
 		clone._initReady = this._isInitReadyFulfilled ? Promise.resolve() : undefined;
 		clone._templateContentReady = this._isTemplateContentFulfilled ? Promise.resolve() : undefined;
-		clone.setAttribute('mind-component-is-cloned', true);
+		clone.setAttribute('mad-component-is-cloned', true);
 
 		return clone;
 	}
 
 	async _allCurrentChildrenComponentsReady () {
-		await this.queryMindComponents();
+		await this.queryMadComponents();
 	}
 
-	async queryMindComponents(allComponents = [], children = this.children, allWhenReadys = []) {
+	async queryMadComponents(allComponents = [], children = this.children, allWhenReadys = []) {
 		for (let child of children) {
-			if (child.children) this.queryMindComponents(allComponents, child.children, allWhenReadys);
+			if (child.children) this.queryMadComponents(allComponents, child.children, allWhenReadys);
 
-			if (child.isMindComponent) {
+			if (child.isMadComponent) {
 				allComponents.push(child);
 				allWhenReadys.push(child.whenReady);
 			} else {
@@ -153,7 +151,7 @@ export class MindComponent extends HTMLElement {
 		// pass default attributes
 		let nextPrototype = Object.getPrototypeOf(this);
 		const defaultAttrs = [];
-		while(nextPrototype && (nextPrototype.constructor.name !== 'MindComponent' && nextPrototype.constructor.name !== HTMLElement.name && nextPrototype.constructor.name !== Element.name && nextPrototype.constructor.name !== Node.name)) {
+		while(nextPrototype && (nextPrototype.constructor.name !== 'MadComponent' && nextPrototype.constructor.name !== HTMLElement.name && nextPrototype.constructor.name !== Element.name && nextPrototype.constructor.name !== Node.name)) {
 			await nextPrototype.constructor.loadTemplate();
 			defaultAttrs.splice(defaultAttrs.length, 0, ...nextPrototype.constructor.__template.attributes);
 			const nextNextProto = Object.getPrototypeOf(nextPrototype);
@@ -166,16 +164,15 @@ export class MindComponent extends HTMLElement {
 		}
 
 		this.generateSlots(clonedContent, this);
-		this.generateRefs(clonedContent, this.mind.refs);
+		this.generateRefs(clonedContent, this.mad.refs);
 		this.appendChild(clonedContent);
 
 		await this._allCurrentChildrenComponentsReady();
 
-		debugger;
-		const thisAttrs = Object.keys(this.mind.attrs_type_cast);
+		const thisAttrs = Object.keys(this.mad.attrs_type_cast);
 		// lets call the attributes to intialize any behaviors
 		for (const attrName of thisAttrs) {
-			this.mind.attrs[attrName] = (this.getAttribute(camelToHyphen(attrName)));
+			this.mad.attrs[attrName] = (this.getAttribute(camelToHyphen(attrName)));
 		}
 
 		this._isTemplateContentFulfilled = true;
@@ -201,7 +198,7 @@ export class MindComponent extends HTMLElement {
 				await prevAttached;
 			}
 
-			this.setAttribute('is-mind-component-with-whenready', true);
+			this.setAttribute('is-mad-component-with-whenready', true);
 			if (!this.constructor.__template) {
 				await this.constructor._templateProm;
 			}
@@ -221,16 +218,16 @@ export class MindComponent extends HTMLElement {
 			}
 			await this._initReady;
 			
-			// call this before and after init to ensure latest mind.refs exists
+			// call this before and after init to ensure latest mad.refs exists
 			await this._allCurrentChildrenComponentsReady();
-			// this.generateRefs(this, this.mind.refs);
+			// this.generateRefs(this, this.mad.refs);
 
 			// ensure no async issues occur if element was moved to new location
 			await Promise.resolve(this.attached());
 
 			// one last time incase dev added anything during this.attached()
 			await this._allCurrentChildrenComponentsReady();
-			// this.generateRefs(this, this.mind.refs);
+			// this.generateRefs(this, this.mad.refs);
 
 			this.whenReadyPromiseController.resolve(undefined);
 			
@@ -259,14 +256,14 @@ export class MindComponent extends HTMLElement {
 	}
 
 	createAttributeListeners() {
-		const castAttrs = this.mind.attrs_type_cast;
+		const castAttrs = this.mad.attrs_type_cast;
 		this.constructor.observedAttributes = () => {
 			return Object.keys(castAttrs).map(camelToHyphen);
 		};
 		const lastValue = {};
 		
-		this.mind.attrs.__isProxy = true;
-		this.mind.attrs = new Proxy(lastValue, {
+		this.mad.attrs.__isProxy = true;
+		this.mad.attrs = new Proxy(lastValue, {
 			get: (targ, prop) => {
 				return targ[prop];
 			},
@@ -305,10 +302,10 @@ export class MindComponent extends HTMLElement {
 		});
 	}
 
-	generateRefs(elem = this, refObj = this.mind.refs) {
-		const mindRefs = elem.querySelectorAll('[mind-ref]');
-		for (const refElem of mindRefs) {
-			const refName = refElem.getAttribute('mind-ref');
+	generateRefs(elem = this, refObj = this.mad.refs) {
+		const madRefs = elem.querySelectorAll('[mad-ref]');
+		for (const refElem of madRefs) {
+			const refName = refElem.getAttribute('mad-ref');
 			if (refName) {
 				if (!refObj[refName]) refObj[refName] = [];
 				if (refObj[refName].indexOf(refElem) < 0) refObj[refName].push(refElem);
@@ -320,23 +317,23 @@ export class MindComponent extends HTMLElement {
 	 * Slots currently only owrk if declared in the html file, they are not dynamic as they are created when template is added. No plans to
 	 * make it dynamic, it might make things more confusing??? not sure
 	 * 
-	 * @param {HTMLElement|DocumentFragment} elem usually this is the template.content (the one with [mind-slot-name="nameOfSlot"])
-	 * @param {HTMLElement} addingElem usually this is the 'this' elem. the one requesting to use slots (the one with [mind-slot-ref="nameOfSlot"])
+	 * @param {HTMLElement|DocumentFragment} elem usually this is the template.content (the one with [mad-slot-name="nameOfSlot"])
+	 * @param {HTMLElement} addingElem usually this is the 'this' elem. the one requesting to use slots (the one with [mad-slot-ref="nameOfSlot"])
 	 * @returns 
 	 */
 	generateSlots(elem, addingElem) {
-		// generate mindSlots
-		const mindSlotsQuery = elem.querySelectorAll('[mind-slot-name]');
+		// generate madSlots
+		const madSlotsQuery = elem.querySelectorAll('[mad-slot-name]');
 
-		const slotElems = [...mindSlotsQuery];
+		const slotElems = [...madSlotsQuery];
 		for (const slotElem of slotElems) {
-			const mindSlotName = slotElem.getAttribute('mind-slot-name');
-			if (!mindSlotName) {
-				console.warn('MindSlot was declared, but no name was provided.');
+			const madSlotName = slotElem.getAttribute('mad-slot-name');
+			if (!madSlotName) {
+				console.warn('MadSlot was declared, but no name was provided.');
 				return;
 			}
 
-			this.mind.slots[mindSlotName] = slotElem;
+			this.mad.slots[madSlotName] = slotElem;
 		}
 	}
 
@@ -344,28 +341,28 @@ export class MindComponent extends HTMLElement {
 	//  * Slots currently only owrk if declared in the html file, they are not dynamic as they are created when template is added. No plans to
 	//  * make it dynamic, it might make things more confusing??? not sure
 	//  * 
-	//  * @param {HTMLElement|DocumentFragment} elem usually this is the template.content (the one with [mind-slot-name="nameOfSlot"])
-	//  * @param {HTMLElement} addingElem usually this is the 'this' elem. the one requesting to use slots (the one with [mind-slot-ref="nameOfSlot"])
+	//  * @param {HTMLElement|DocumentFragment} elem usually this is the template.content (the one with [mad-slot-name="nameOfSlot"])
+	//  * @param {HTMLElement} addingElem usually this is the 'this' elem. the one requesting to use slots (the one with [mad-slot-ref="nameOfSlot"])
 	//  * @returns 
 	//  */
 	// generateSlots(elem, addingElem) {
-	// 	// generate mindSlots
-	// 	const mindSlotsQuery = elem.querySelectorAll('template[mind-slot-name]');
+	// 	// generate madSlots
+	// 	const madSlotsQuery = elem.querySelectorAll('template[mad-slot-name]');
 
-	// 	const deref = [...mindSlotsQuery];
+	// 	const deref = [...madSlotsQuery];
 	// 	for (const tmplt of deref) {
 			
-	// 		const mindSlotName = tmplt.getAttribute('mind-slot-name');
-	// 		if (!mindSlotName) {
-	// 			console.warn('MindSlot was declared, but no name was provided.');
+	// 		const madSlotName = tmplt.getAttribute('mad-slot-name');
+	// 		if (!madSlotName) {
+	// 			console.warn('MadSlot was declared, but no name was provided.');
 	// 			return;
 	// 		}
 
-	// 		const addee = addingElem.querySelector(`:scope > [mind-slot-ref="${mindSlotName}"]`);
+	// 		const addee = addingElem.querySelector(`:scope > [mad-slot-ref="${madSlotName}"]`);
 	// 		const newElement = addee ? addee : tmplt.content.childNodes.length ? tmplt.content.cloneNode(true) : undefined;
 
 	// 		if (!newElement) {
-	// 			tmplt.remove(); // leaving the template just clutters mind.refs (adding :not(template) to mind.refs query might help if we want to keep template)
+	// 			tmplt.remove(); // leaving the template just clutters mad.refs (adding :not(template) to mad.refs query might help if we want to keep template)
 	// 			continue;
 	// 		}
 
@@ -443,7 +440,7 @@ export class MindComponent extends HTMLElement {
 					resolve(elems);
 				} else if (currNumOfTries < numberOfTries){
 					setTimeout(() => {
-						resolve(MindComponent.querySelectorAll(qStr, timeout, numberOfTries, currNumOfTries++));
+						resolve(MadComponent.querySelectorAll(qStr, timeout, numberOfTries, currNumOfTries++));
 					}, timeout);
 				} else {
 					resolve([]);
@@ -468,7 +465,7 @@ export class MindComponent extends HTMLElement {
 
 		if ((this._allowRenderOptimized && this.collectedRenderTime >= maxTimePassedInMs) || isFirstRender) {
 			this.collectedRenderTime = 0.0;
-			Object.assign(this.style, this.mind.style);
+			Object.assign(this.style, this.mad.style);
 			this.renderOptimized();
 			this._allowRenderOptimized = false;
 		}
@@ -485,4 +482,4 @@ export class MindComponent extends HTMLElement {
 	}
 }
 
-export default MindComponent;
+export default MadComponent;
