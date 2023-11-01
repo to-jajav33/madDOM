@@ -31,6 +31,8 @@ export class MadDomSprite extends MadDomTransform {
 					reject();
 				};
 				this.mad.refs.refTexture[0].onload = () => {
+					this.width = this.mad.refs.refTexture[0].naturalWidth;
+					this.height = this.mad.refs.refTexture[0].naturalHeight;
 					resolve();
 				};
 				this.mad.refs.refTexture[0].src = frames[0];

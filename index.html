@@ -1,7 +1,16 @@
 <!DOCTYPE html>
 <html>
-	<body>
-		<div id="canvas" style="position: relative;"></div>
+	<style>
+		* {
+			box-sizing: border-box;
+			padding: 0;
+			margin: 0;
+		}
+	</style>
+	<body style="width: 100vw; height: 100vh; display: grid;">
+		<div id="canvas" style="position: relative; display: grid; grid-template-columns: repeat(270, 1fr); grid-template-rows: repeat(480, 1fr); width: 100vw; max-width: 100vw; height: 56.25vw; max-height: 100vh; background-color: aquamarine; align-self: center; justify-self: center;">
+		
+		</div>
 	</body>
 
 	<script src="./index.js" type="module"></script>
