@@ -69,6 +69,19 @@ export class MadDom {
 			return modules.MadDomSprite;
 		});
 	}
+
+
+	static get canvasResolution() {
+		MadDom._canvasResolution = MadDom._canvasResolution || 1;
+		document.documentElement.style.setProperty(`--canvas-resolution`, MadDom._canvasResolution);
+		return MadDom._canvasResolution;
+	}
+	static set canvasResolution(val) {
+		MadDom._canvasResolution = val;
+		document.documentElement.style.setProperty(`--canvas-resolution`, MadDom._canvasResolution);
+	}
 }
+
+MadDom.canvasResolution = 10;
 
 export default MadDom;

@@ -62,6 +62,10 @@ export class MadDomTransform extends MadComponent {
 		this.origin = this;
 	}
 
+	async attached() {
+		this.madDom = await this.getMadDOM();
+	}
+
 	get anchor() {
 		return this.querySelector('mad-dom-transform');
 	}
@@ -89,7 +93,7 @@ export class MadDomTransform extends MadComponent {
 	}
 
 	updateGridArea() {
-		this.origin.style.gridArea = `calc(${(this.y | 0)} + 1) / calc(${(this.x | 0)} + 1) / calc(${this.y} + ${this.height | 0}) / calc(${this.x} + ${this.width | 0})`; // immediate render
+		this.origin.style.gridArea = `calc(${(this.y | 0) * this.madDom.canvasResolution} + 1) / calc(${(this.x | 0) * this.madDom.canvasResolution} + 1) / calc(${this.y * this.madDom.canvasResolution} + ${(this.height | 0) * this.madDom.canvasResolution}) / calc(${this.x * this.madDom.canvasResolution} + ${(this.width | 0) * this.madDom.canvasResolution})`; // immediate render
 	}
 
 	get x () {

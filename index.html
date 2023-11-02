@@ -9,10 +9,11 @@
 		:root {
 			--canvas-size-x: 270;
 			--canvas-size-y: 480;
+			--canvas-resolution: 1;
 		}
 	</style>
 	<body style="width: 100vw; height: 100vh; display: grid;">
-		<div id="canvas" style="position: relative; display: grid; grid-template-columns: repeat(var(--canvas-size-x), 1fr); grid-template-rows: repeat(var(--canvas-size-y), 1fr); width: 100vw; height: calc( (var(--canvas-size-x) / var(--canvas-size-y)) * 100vw); background-color: aquamarine; align-self: center; justify-self: center;">
+		<div id="canvas" style="position: relative; display: grid; grid-template-columns: repeat(calc(var(--canvas-size-x) * var(--canvas-resolution)), 1fr); grid-template-rows: repeat(calc(var(--canvas-size-y) * var(--canvas-resolution)), 1fr); width: 100vw; height: calc( (var(--canvas-size-x) / var(--canvas-size-y)) * 100vw); background-color: aquamarine; align-self: center; justify-self: center;">
 		
 		</div>
 	</body>
