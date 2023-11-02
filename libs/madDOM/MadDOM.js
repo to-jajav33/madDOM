@@ -82,6 +82,6 @@ export class MadDom {
 	}
 }
 
-MadDom.canvasResolution = 10;
+MadDom.canvasResolution = 1;
 
 export default MadDom;
