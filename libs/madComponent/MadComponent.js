@@ -76,7 +76,7 @@ export class MadComponent extends HTMLElement {
 		this.whenReadyPromiseController = promiseFactory();
 		this.whenReady;
 		
-		if (!this.constructor._templateProm) {
+		if (!MadComponent.templatePromises.get(this.constructor)) {
 			this.constructor.loadTemplate();
 		}
 	}
@@ -145,15 +145,19 @@ export class MadComponent extends HTMLElement {
 		if (this._templateContentReady) return this._templateContentReady;
 
 		/** @type {HTMLTemplateElement} */
-		const template = this.constructor.__template;
+		let template = MadComponent.templates.get(this.constructor);
 		const clonedContent = template.content.cloneNode(true);
+		
+		const defaultAttrs = [];
+		// ensure "this.attributes" override all other attributes by being the first
+		defaultAttrs.splice(defaultAttrs.length, 0, ...template.attributes);
 
 		// pass default attributes
-		let nextPrototype = Object.getPrototypeOf(this);
-		const defaultAttrs = [];
-		while(nextPrototype && (nextPrototype.constructor.name !== 'MadComponent' && nextPrototype.constructor.name !== HTMLElement.name && nextPrototype.constructor.name !== Element.name && nextPrototype.constructor.name !== Node.name)) {
-			await nextPrototype.constructor.loadTemplate();
-			defaultAttrs.splice(defaultAttrs.length, 0, ...nextPrototype.constructor.__template.attributes);
+		let nextPrototype = Object.getPrototypeOf(this.constructor);
+		while(nextPrototype && (nextPrototype.name !== 'MadComponent' && nextPrototype.name !== HTMLElement.name && nextPrototype.constructor.name !== Element.name && nextPrototype.constructor.name !== Node.name)) {
+			await nextPrototype.loadTemplate();
+			template = MadComponent.templates.get(nextPrototype);
+			defaultAttrs.splice(defaultAttrs.length, 0, ...template.attributes);
 			const nextNextProto = Object.getPrototypeOf(nextPrototype);
 			nextPrototype = nextNextProto;
 		}
@@ -199,8 +203,8 @@ export class MadComponent extends HTMLElement {
 			}
 
 			this.setAttribute('is-mad-component-with-whenready', true);
-			if (!this.constructor.__template) {
-				await this.constructor._templateProm;
+			if (!MadComponent.templates.get(this.constructor)) {
+				await MadComponent.templatePromises.get(this.constructor);
 			}
 
 			this.createAttributeListeners();
@@ -372,10 +376,12 @@ export class MadComponent extends HTMLElement {
 
 
 	static async loadTemplateWithMeta(metaUrl, paramClass) {
-		if (paramClass._templateProm) return await paramClass._templateProm;
+		let templProm = MadComponent.templatePromises.get(paramClass);
+		if (templProm) return await templProm;
 		
-		paramClass._templateProm = paramClass._loadTemplate(metaUrl, paramClass);
-		return await paramClass._templateProm;
+		templProm = paramClass._loadTemplate(metaUrl, paramClass);
+		MadComponent.templatePromises.set(paramClass, templProm);
+		return await templProm;
 	}
 
 	static async loadTemplate() {
@@ -388,20 +394,21 @@ export class MadComponent extends HTMLElement {
 	}
 
 	static async _loadTemplate(metaURL, paramClass) {
-		if (!paramClass.__template) {
+		if (!MadComponent.templates.get(this.constructor)) {
 			const htmlResp = await fetch(metaURL.replace('.js', '.html'));
 			if (htmlResp.status !== 200) throw(`${htmlResp.statusText} ${htmlResp.url}`);
 
 			const html = await htmlResp.text();
 			docFragSpan.innerHTML = '';
 			docFragSpan.innerHTML = html;
-			paramClass.__template = docFragSpan.querySelector('template');
-			if (!paramClass.__template) {
+			let template = docFragSpan.querySelector('template');
+			if (!template) {
 				docFragSpan.innerHTML = `<template>${html}</template>`;
-				paramClass.__template = docFragSpan.querySelector('template');
+				template = docFragSpan.querySelector('template');
 			}
-			const srcs = paramClass.__template.content.querySelectorAll('[src]');
-			const hrefs = paramClass.__template.content.querySelectorAll('[href]');
+			MadComponent.templates.set(this, template);
+			const srcs = template.content.querySelectorAll('[src]');
+			const hrefs = template.content.querySelectorAll('[href]');
 
 			let brokenURL = metaURL.split('/');
 			brokenURL.splice(-1, 1);
@@ -481,5 +488,8 @@ export class MadComponent extends HTMLElement {
 		return hyphenName;
 	}
 }
+
+MadComponent.templates = new Map();
+MadComponent.templatePromises = new Map();
 
 export default MadComponent;
