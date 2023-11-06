@@ -2,7 +2,9 @@
 import MadDom from './libs/madDOM/MadDOM.js';
 
 (async () => {
-	const canvas = document.body.querySelector('#canvas');
+	const MadDomStageRatio = await MadDom.MadDomStageRatio;// document.body.querySelector('#canvas');
+	const canvas = await MadDom.createAt(MadDomStageRatio, document.body);
+	
 	/** @type {import('./libs/madDOM/MadDomSprite.js').MadDomSprite} */
 	const MadDomSprite = await MadDom.MadDomSprite;
 

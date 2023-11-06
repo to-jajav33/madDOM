@@ -61,12 +61,23 @@ export class MadDom {
 
 	/**
 	 * 
-	 * @returns {InstanceType<import('./MadDomContainer.js').MadDomContainer>}
+	 * @returns {InstanceType<import('./MadDomSprite.js').MadDomSprite>}
 	 */
 	static get MadDomSprite() {
 		return import('./MadDomSprite.js').then((modules) => {
 			MadDom.define(modules.MadDomSprite);
 			return modules.MadDomSprite;
+		});
+	}
+
+	/**
+	 * 
+	 * @returns {InstanceType<import('./MadDomStageRatio.js').MadDomStageRatio>}
+	 */
+	static get MadDomStageRatio() {
+		return import('./MadDomStageRatio.js').then((modules) => {
+			MadDom.define(modules.MadDomStageRatio);
+			return modules.MadDomStageRatio;
 		});
 	}
 
